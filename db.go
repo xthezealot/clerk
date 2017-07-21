@@ -45,7 +45,7 @@ func New(filename string, source interface{}) (DB, error) {
 	return db, nil
 }
 
-// Save encodes all the source data in gob format and updates the data file when there is no error.
+// Save encodes all the source data in gob format and updates the data file if there is no error.
 func (d *db) Save() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -67,6 +67,7 @@ func (d *db) Save() error {
 	return nil
 }
 
+// Remove deletes the database file.
 func (d *db) Remove() error {
 	return os.Remove(d.filename)
 }
