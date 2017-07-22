@@ -15,7 +15,7 @@ var (
 
 func init() {
 	var err error
-	if db, err = clerk.New("data.db", data); err != nil {
+	if db, err = clerk.New("data.gob", data); err != nil {
 		panic(err)
 	}
 }

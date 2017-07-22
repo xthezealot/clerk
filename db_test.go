@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	testFilename = "test.db"
+	testFilename = "test.gob"
 	testDB       DB
 	testSource   map[int]int
 )

@@ -25,7 +25,7 @@ Make a new database with a source and a destination file name:
 ```Go
 var data interface{}
 
-db, err := clerk.New("data.db", &data)
+db, err := clerk.New("data.gob", &data)
 if err != nil {
 	panic(err)
 }
