@@ -1,7 +1,7 @@
 /*
 Package clerk provides file persistence for your Go variables.
 
-It can replace external databases for small projects that can keep data in memory and don't make a lot of writes.
+It can replace external databases for small projects that can keep data in memory and don't do a lot of writes.
 */
 package clerk
 
