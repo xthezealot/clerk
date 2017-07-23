@@ -8,7 +8,7 @@ import (
 
 var (
 	testFilename = "test.gob"
-	testDB       DB
+	testDB       *DB
 	testSource   map[int]int
 )
 
@@ -21,26 +21,30 @@ func reset() {
 	}
 }
 
-func init() {
+func TestDB(t *testing.T) {
 	reset()
+	defer testDB.Remove()
+
+	// Save random data in file.
 	for i := 0; i < 10; i++ {
 		testSource[rand.Int()] = rand.Int()
 	}
-}
-
-func TestDB(t *testing.T) {
-	defer testDB.Remove()
-	err := testDB.Save()
-	if err != nil {
+	if err := testDB.Save(); err != nil {
 		panic(err)
 	}
+
+	// Keep old data for comparison and reopen file.
 	oldTestSource := make(map[int]int)
 	for k, v := range testSource {
 		oldTestSource[k] = v
 	}
 	reset()
+
 	if !reflect.DeepEqual(oldTestSource, testSource) {
 		t.Fail()
+	}
+	if err := testDB.Remove(); err != nil {
+		panic(err)
 	}
 }
 

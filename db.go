@@ -1,7 +1,7 @@
 /*
 Package clerk provides file persistence for your Go variables.
 
-It can replace external databases for small projects that can keep data in memory and don't do a lot of writes.
+It can replace external databases for small projects that can keep data in memory and don't make a lot of writes.
 */
 package clerk
 
@@ -14,12 +14,7 @@ import (
 )
 
 // DB provides methods to persist your data.
-type DB interface {
-	Save() error
-	Remove() error
-}
-
-type db struct {
+type DB struct {
 	filename    string
 	tmpFilename string
 	source      interface{}
@@ -28,13 +23,13 @@ type db struct {
 
 // New makes a new database.
 // It decodes the named file in the data source (a pointer to in-memory data).
-func New(filename string, source interface{}) (DB, error) {
+func New(filename string, source interface{}) (*DB, error) {
 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
-	db := &db{
+	db := &DB{
 		filename:    filename,
 		tmpFilename: tmpFilename(filename),
 		source:      source,
@@ -46,7 +41,7 @@ func New(filename string, source interface{}) (DB, error) {
 }
 
 // Save encodes all the source data in gob format and updates the data file if there is no error.
-func (d *db) Save() error {
+func (d *DB) Save() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -68,7 +63,7 @@ func (d *db) Save() error {
 }
 
 // Remove deletes the database file.
-func (d *db) Remove() error {
+func (d *DB) Remove() error {
 	return os.Remove(d.filename)
 }
 
