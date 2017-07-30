@@ -15,10 +15,10 @@ import (
 
 // DB provides methods to persist your data.
 type DB struct {
+	sync.Mutex
 	filename    string
 	tmpFilename string
 	source      interface{}
-	mu          sync.Mutex
 }
 
 // New makes a new database.
@@ -42,8 +42,8 @@ func New(filename string, source interface{}) (*DB, error) {
 
 // Save encodes all the source data in gob format and updates the data file if there is no error.
 func (d *DB) Save() error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	d.Lock()
+	defer d.Unlock()
 
 	tmpFile, err := os.OpenFile(d.tmpFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
