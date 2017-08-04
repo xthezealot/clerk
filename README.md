@@ -41,3 +41,5 @@ if err = data.Save(); err != nil {
 ```
 
 On restart, the data file will be decoded back in the source variable.
+
+If the data must be accessed by multiple goroutines; don't forget to use [sync.Mutex](https://golang.org/pkg/sync/#Mutex) or [sync.RWMutex](https://golang.org/pkg/sync/#RWMutex).
