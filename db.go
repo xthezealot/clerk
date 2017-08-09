@@ -22,7 +22,7 @@ var (
 
 // DB provides methods to persist your data.
 type DB struct {
-	Time        time.Time // Time is the timestamp of the last data modification (calling DB.Lock).
+	UpdatedAt   time.Time // UpdatedAt is the timestamp of the last data modification (by calling DB.Lock).
 	filename    string
 	tmpFilename string
 	parent      interface{}
@@ -122,7 +122,7 @@ func (d *DB) Remove() error {
 
 // Lock locks database for reading and writing.
 func (d *DB) Lock() {
-	d.Time = time.Now()
+	d.UpdatedAt = time.Now()
 	d.mu.Lock()
 }
 
