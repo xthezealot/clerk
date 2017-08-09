@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 var (
@@ -21,17 +22,16 @@ var (
 
 // DB provides methods to persist your data.
 type DB struct {
-	// Clerkfile is the file name used for saving.
-	// It's exported because of encoding/gob which requires at least one field to be exported.
-	// But its value must be set only through Init.
-	Clerkfile string
-	parent    interface{}
-	mu        sync.RWMutex
+	Time        time.Time // Time is the timestamp of the last data modification (calling DB.Lock).
+	filename    string
+	tmpFilename string
+	parent      interface{}
+	mu          sync.RWMutex
 }
 
 // DBInterface represents an underlying database.
 type DBInterface interface {
-	setClerkfile(string)
+	setFilename(string)
 	setParent(interface{})
 	inited() bool
 	Save() error
@@ -48,14 +48,18 @@ func Init(filename string, db DBInterface) {
 	if db.inited() {
 		panic(errDBInited)
 	}
-	db.setClerkfile(filename)
+	db.setFilename(filename)
 	db.setParent(db)
 }
 
-func (d *DB) setClerkfile(name string) {
+func (d *DB) setFilename(name string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	d.Clerkfile = name
+	d.filename = name
+	// Set d.tmpFilename
+	dir := filepath.Dir(name)
+	base := filepath.Base(name)
+	d.tmpFilename = filepath.Join(dir, "~"+base)
 }
 
 func (d *DB) setParent(p interface{}) {
@@ -65,7 +69,7 @@ func (d *DB) setParent(p interface{}) {
 }
 
 func (d *DB) inited() bool {
-	return d.Clerkfile != "" && d.parent != nil
+	return d.filename != "" && d.tmpFilename != "" && d.parent != nil
 }
 
 // Save persists the database in the file set on init.
@@ -75,7 +79,7 @@ func (d *DB) Save() error {
 		return errDBNotInited
 	}
 
-	tmpFile, err := os.OpenFile(tmpFilename(d.Clerkfile), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	tmpFile, err := os.OpenFile(d.tmpFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return err
 	}
@@ -86,7 +90,7 @@ func (d *DB) Save() error {
 	if err = tmpFile.Close(); err != nil {
 		return err
 	}
-	if err = os.Rename(tmpFilename(d.Clerkfile), d.Clerkfile); err != nil {
+	if err = os.Rename(d.tmpFilename, d.filename); err != nil {
 		return err
 	}
 	return nil
@@ -99,9 +103,7 @@ func (d *DB) Rebase() error {
 		return errDBNotInited
 	}
 
-	initedClerkfile := d.Clerkfile
-
-	file, err := os.OpenFile(initedClerkfile, os.O_RDONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile(d.filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
 	}
@@ -110,17 +112,17 @@ func (d *DB) Rebase() error {
 	if err = gob.NewDecoder(file).Decode(d.parent); err != nil && err != io.EOF {
 		return err
 	}
-	d.Clerkfile = initedClerkfile // Keep the Clerkfile inited by the user.
 	return nil
 }
 
 // Remove deletes the database file.
 func (d *DB) Remove() error {
-	return os.Remove(d.Clerkfile)
+	return os.Remove(d.filename)
 }
 
 // Lock locks database for reading and writing.
 func (d *DB) Lock() {
+	d.Time = time.Now()
 	d.mu.Lock()
 }
 
@@ -137,10 +139,4 @@ func (d *DB) Unlock() {
 // RUnlock unlocks database for reading.
 func (d *DB) RUnlock() {
 	d.mu.RUnlock()
-}
-
-func tmpFilename(filename string) string {
-	dir := filepath.Dir(filename)
-	base := filepath.Base(filename)
-	return filepath.Join(dir, "~"+base)
 }
