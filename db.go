@@ -75,8 +75,6 @@ func (db *DB) setParent(p interface{}) {
 }
 
 func (db *DB) inited() bool {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
 	return db.filename != "" && db.tmpFilename != "" && db.parent != nil
 }
 
@@ -86,7 +84,7 @@ func (db *DB) Touch() {
 }
 
 // Save persists the database in the file set on init.
-// Be sure the database is locked for reading.
+// Be sure the database is locked for writing.
 func (db *DB) Save() error {
 	if !db.inited() {
 		return ErrDBNotInited
@@ -169,7 +167,10 @@ func (db *DB) MigrateOrRebase(timestamp string, oldDB DBInterface, do func() err
 
 // Remove deletes the database file.
 func (db *DB) Remove() error {
-	return os.Remove(db.filename)
+	if err := os.Remove(db.filename); !os.IsNotExist(err) {
+		return err
+	}
+	return nil
 }
 
 // Lock locks database for reading and writing.
