@@ -67,7 +67,7 @@ func (db *DB) setFilename(name string) {
 	// Set d.tmpFilename
 	dir := filepath.Dir(name)
 	base := filepath.Base(name)
-	db.tmpFilename = filepath.Join(dir, "~"+base)
+	db.tmpFilename = filepath.Join(dir, base+"~")
 }
 
 func (db *DB) setParent(p interface{}) {
