@@ -101,10 +101,7 @@ func (db *DB) Save() error {
 	if err = tmpFile.Close(); err != nil {
 		return err
 	}
-	if err = os.Rename(db.tmpFilename, db.filename); err != nil {
-		return err
-	}
-	return nil
+	return os.Rename(db.tmpFilename, db.filename)
 }
 
 // Rebase replaces the data with the content of the file set on init.
